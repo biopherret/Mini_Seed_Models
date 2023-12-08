@@ -3,9 +3,6 @@ import numpy as np
 from scipy import integrate
 import sys
 
-sys.path.append('.../')
-from functions import model_device_functions as mdf
-
 def write_json(data, file_name):
     with open (file_name, 'w') as file:
         json.dump(data, file, indent = 4)
@@ -49,7 +46,7 @@ def get_os_length_dicts(seed_len_types):
 
 def get_ydata(len_dist, bins, x_data):
     y_data, _= np.histogram(len_dist, bins = bins) #grab the resulting y points by plotting the histogram
-    normed_y_data = y_data/mdf.find_area_under_curve(x_data, y_data) #normalize the data
+    normed_y_data = y_data/find_area_under_curve(x_data, y_data) #normalize the data
     return normed_y_data
 
 def get_yerror(len_dist, bins, x_data, mes_error):
@@ -62,5 +59,10 @@ def get_yerror(len_dist, bins, x_data, mes_error):
 def normalize_hist_error(x, y, y_err):
     bin_width = x[1]-x[0] #bin width is constant
     delta_A = bin_width * np.sqrt(np.sum([Ni**2 for Ni in y_err])) #calculate the error of the area under the curve
-    A = mdf.find_area_under_curve(x, y) #calculate the area under the curve
+    A = find_area_under_curve(x, y) #calculate the area under the curve
     return (y * delta_A)/(A**2) #normalize the error
+
+def find_area_under_curve(x, y):
+    bin_width = x[1]-x[0] #bin width is constant
+    A = bin_width * np.sum(y) #calculate the area under the curve
+    return A
