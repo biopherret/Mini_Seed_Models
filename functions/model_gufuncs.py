@@ -3,10 +3,10 @@ sys.path.append('.../')
 from functions import model_device_functions as mdf
 
 import numpy as np
-from numba import vectorize
+from numba import guvectorize
 import numba
 
-@vectorize(['float32[:,:](float32[:,:], float32[:], int32, int32, int64, int64, float32, float32)'], target='cuda')
+@guvectorize(['void(float32[:,:], float32[:], int32, int32, int64, int64, float32, float32)'], '(n,m), (l), (), (), (), (), (), ()->(n,m)', target='cuda')
 def get_L_mat(L_mat, parr4, N_nucl, Nb, n_max, num_steps, h, Ti):
     new_L_mat = numba.float32[:,:]
     for t in range(num_steps):
@@ -16,4 +16,4 @@ def get_L_mat(L_mat, parr4, N_nucl, Nb, n_max, num_steps, h, Ti):
     for t in range(num_steps):
         for n in range(n_max +2):
             L_mat[t,n] = found_L_mat[t,n]
-    return L_mat
+    
