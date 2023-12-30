@@ -74,26 +74,26 @@ def part_dL(L_vec, n, N_nucl, par_div, Nb, n_max):
     elif par_div == 'kbreak':
         return part_kbreak(L_vec, n, n_max)
 
-@cuda.jit(['float32[:](float32[:], float32[:], float32[:], int64, int64, int64)'], device=True)
+@cuda.jit(['float64[:](float64[:], float64[:], float32[:], int32, int32, int32)'], device=True)
 def dL(dL_vec, L_vec, parr, N_nucl, Nb, n_max):
     for n in range(n_max + 2):
         dL_vec[n] = parr[0] * part_dL(L_vec, n, N_nucl, 'kp', Nb, n_max) + parr[1] * part_dL(L_vec, n, N_nucl, 'kp0', Nb, n_max) + parr[2] * part_dL(L_vec, n, N_nucl, 'kd', Nb, n_max) + parr[3] * part_dL(L_vec, n, N_nucl, 'kbreak', Nb, n_max)
     
     return dL_vec
 
-@cuda.jit(['float32[:,:](float32[:,:], float32[:], int64, int64, int64, int64, float32, float32)'], device=True)
+@cuda.jit(['float64[:,:](float64[:,:], float32[:], int32, int32, int32, int32, float32, float32)'], device=True)
 def L(L_mat, parr, N_nucl, Nb, n_max, num_steps, h, Ti): 
     L_mat[0,n_max + 1] = 100 * 10**(-9) #initial [T] 100nM
     L_mat[0,0] = Ti
 
-    L_vec = numba.float32[:]
+    L_vec = numba.float64[:]
     for n in range(n_max + 2):
         L_vec[n] = 0
 
     L_vec[n_max + 1] = 100 * 10**(-9)
     L_vec[0] = Ti
     for t_step in range(1,num_steps):
-        new_dL_vec = numba.float32[:] #create an empty dL vector
+        new_dL_vec = numba.float64[:] #create an empty dL vector
         for n in range(n_max + 2):
             new_dL_vec[n] = 0
         
