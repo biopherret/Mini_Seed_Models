@@ -6,14 +6,18 @@ import numpy as np
 from numba import guvectorize
 import numba
 
-@guvectorize(['float64[:,:], float32[:], int32, int32, int32, int32, float32, float32'], '(n,m), (l), (), (), (), (), ()->()', target='cuda')
-def get_L_mat(L_mat, parr4, N_nucl, Nb, n_max, num_steps, h, Ti):
-    #new_L_mat = numba.float32[:,:]
-    #for t in range(num_steps):
-    #    for n in range(n_max +2):
-    #        new_L_mat[t,n] = 0 #establish the size of the matrix and fill with zeros
-    found_L_mat = mdf.L(L_mat, parr4, N_nucl, Nb, n_max, num_steps, h, Ti)
-    for t in range(num_steps):
-        for n in range(n_max +2):
-            L_mat[t,n] = found_L_mat[t,n]
+@guvectorize(['float32[:], float32[:], int32[:], float64[:], float64[:]'], '(n), (m), (l), (k)->(k)', target='cuda') #exclude the last input object of the function in the signature otherwise will error
+def get_L_final_vec(parr4, cont_floats, cont_ints, zero_vec, L_vec):
+
+    Nb = cont_ints[0]
+    n_max = cont_ints[1]
+    num_steps = cont_ints[2]
+    N_nucl = cont_ints[3]
+    h = cont_floats[0]
+    Ti = cont_floats[1]
+
+    found_L_vec = mdf.L(L_vec, zero_vec, parr4, N_nucl, Nb, n_max, num_steps, h, Ti)
+    for n in range(n_max +2):
+        L_vec[n] = found_L_vec[n]
+
     

@@ -81,23 +81,14 @@ def dL(dL_vec, L_vec, parr, N_nucl, Nb, n_max):
     
     return dL_vec
 
-@cuda.jit(['float64[:,:](float64[:,:], float32[:], int32, int32, int32, int32, float32, float32)'], device=True)
-def L(L_mat, parr, N_nucl, Nb, n_max, num_steps, h, Ti): 
-    L_mat[0,n_max + 1] = 100 * 10**(-9) #initial [T] 100nM
-    L_mat[0,0] = Ti
-
-    L_vec = numba.float64[:]
-    for n in range(n_max + 2):
-        L_vec[n] = 0
-
-    L_vec[n_max + 1] = 100 * 10**(-9)
+@cuda.jit(['float64[:](float64[:], float64[:], float32[:], int32, int32, int32, int32, float32, float32)'], device=True)
+def L(L_vec, zero_vec, parr, N_nucl, Nb, n_max, num_steps, h, Ti): 
+    #define L_vec at t=0
+    L_vec[n_max + 1] = 100 * 10**(-9) #initial [T] 100nM
     L_vec[0] = Ti
+
     for t_step in range(1,num_steps):
-        new_dL_vec = numba.float64[:] #create an empty dL vector
+        new_L_vec = vec_add(L_vec, scal_x_vec(h, dL(zero_vec, L_vec, parr, N_nucl, Nb, n_max)))  #L_vec is from the prvious loop so this is calling dL at t_step-1  
         for n in range(n_max + 2):
-            new_dL_vec[n] = 0
-        
-        L_vec = vec_add(L_vec, scal_x_vec(h, dL(new_dL_vec, L_vec, parr, N_nucl, Nb, n_max)))  #L_vec is from the prvious loop so this is calling dL at t_step-1
-        for n in range(n_max + 2):
-            L_mat[t_step,n] = L_vec[n]   
-    return L_mat
+            L_vec[n] = new_L_vec[n]
+    return L_vec
