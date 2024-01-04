@@ -92,17 +92,3 @@ def L(L_vec, zero_vec, parr, N_nucl, Nb, n_max, num_steps, h, Ti):
         for n in range(n_max + 2):
             L_vec[n] = new_L_vec[n]
     return L_vec
-
-#@jit(target_backend='cuda', nopython = True)
-#def chi_square(y_data, y_error, model, cont, per_n = False):
-#    s = 0
-#    n_num = 0
-#    for n in range(int(cont[3])):
-#        if y_error[n] != 0:
-#            n_num += 1
-#            s += ((y_data[n] - model[n])/(y_error[n]))**2
-#    
-#    if per_n:
-#        return s/n_num
-#    else:
-#        return s
