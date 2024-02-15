@@ -1,4 +1,5 @@
 import numpy as np
+from functions import model_general as mg
 
 def plot_hist(x_data, y_data_sets, y_error_sets, axs, seed_len_types, boot=False, norm = True):
     for i in range(len(seed_len_types)): #for each seed type
@@ -62,21 +63,8 @@ def get_mean_in_sig_fig(means_vec, errors_vec):
         sigfigs.append(sigfig)
     return sigfigs
 
-def chi_square(y_data, y_error, model, n_max, per_n = False):
-    s = 0
-    n_num = 0
-    for n in range(n_max):
-        if y_error[n] != 0:
-            n_num += 1
-            s += ((y_data[n] - model[n])/(y_error[n]))**2
-    
-    if per_n:
-        return s/n_num
-    else:
-        return s
-
 def plot_model_results(parrs, models, x_data, y_data_sets, y_error_sets, axs, colors, seed_len_types, n_max, parr_error = None):
-    chi_squares = [chi_square(y_data_sets[i], y_error_sets[i], models[i], n_max, per_n=True) for i in range(len(seed_len_types))]
+    chi_squares = [mg.chi_square(y_data_sets[i], y_error_sets[i], models[i], n_max, per_n=True) for i in range(len(seed_len_types))]
     
     for i in range(4)[::-1]: #for seed type
         y_axis = [0,0,1,1][i] #determine which quadrant the plot goes in

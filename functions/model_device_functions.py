@@ -31,7 +31,7 @@ def part_kp(L_vec, n, Nb, n_max):
         return -L_vec[n_max + 1] * L_vec[1]
     else: #for 1<n<n_max +1
         return L_vec[n_max + 1] * (L_vec[n-1] - L_vec[n])
-
+    
 @cuda.jit(device=True)
 def part_kp0(L_vec, n, N_nucl, Nb, n_max):
     if n==n_max + 1:
@@ -62,33 +62,3 @@ def part_kbreak(L_vec, n, n_max):
         return 0
     else:
         return 2 * vec_sum(L_vec[n+1:n_max + 1]) - (n-1) * L_vec[n]
-
-@cuda.jit(device=True)
-def part_dL(L_vec, n, N_nucl, par_div, Nb, n_max):
-    if par_div == 'kp':
-        return part_kp(L_vec, n, Nb, n_max)
-    elif par_div == 'kp0':
-        return part_kp0(L_vec, n, N_nucl, Nb, n_max)
-    elif par_div == 'kd':
-        return part_kd(L_vec, n, N_nucl, Nb, n_max)
-    elif par_div == 'kbreak':
-        return part_kbreak(L_vec, n, n_max)
-
-@cuda.jit(['float64[:](float64[:], float64[:], float32[:], int32, int32, int32)'], device=True)
-def dL(dL_vec, L_vec, parr, N_nucl, Nb, n_max):
-    for n in range(n_max + 2):
-        dL_vec[n] = parr[0] * part_dL(L_vec, n, N_nucl, 'kp', Nb, n_max) + parr[1] * part_dL(L_vec, n, N_nucl, 'kp0', Nb, n_max) + parr[2] * part_dL(L_vec, n, N_nucl, 'kd', Nb, n_max) + parr[3] * part_dL(L_vec, n, N_nucl, 'kbreak', Nb, n_max)
-    
-    return dL_vec
-
-@cuda.jit(['float64[:](float64[:], float64[:], float32[:], int32, int32, int32, int32, float32, float32)'], device=True)
-def L(L_vec, zero_vec, parr, N_nucl, Nb, n_max, num_steps, h, Ti): 
-    #define L_vec at t=0
-    L_vec[n_max + 1] = 100 * 10**(-9) #initial [T] 100nM
-    L_vec[0] = Ti
-
-    for t_step in range(1,num_steps):
-        new_L_vec = vec_add(L_vec, scal_x_vec(h, dL(zero_vec, L_vec, parr, N_nucl, Nb, n_max)))  #L_vec is from the prvious loop so this is calling dL at t_step-1  
-        for n in range(n_max + 2):
-            L_vec[n] = new_L_vec[n]
-    return L_vec

@@ -2,6 +2,7 @@ import json
 import numpy as np
 from scipy import integrate
 import sys
+from functions import model_gufuncs as mgpu
 
 def write_json(data, file_name):
     with open (file_name, 'w') as file:
@@ -66,3 +67,30 @@ def find_area_under_curve(x, y):
     bin_width = x[1]-x[0] #bin width is constant
     A = bin_width * np.sum(y) #calculate the area under the curve
     return A
+
+def chi_square(y_data, y_error, model, n_max, per_n = False):
+    s = 0
+    n_num = 0
+    for n in range(n_max):
+        if y_error[n] != 0:
+            n_num += 1
+            s += ((y_data[n] - model[n])/(y_error[n]))**2
+    
+    if per_n:
+        return s/n_num
+    else:
+        return s
+
+@np.vectorize(excluded = [1,5,6,7,8,9,10,11])
+def log_like(parr, x_data, y_data_set, y_error_set, N_nucl, Nb, n_max, num_steps, h, Ti, Si, bounds):
+    for i in range(len(parr)):
+        if not (bounds[0][i] < parr[i] < bounds[1][i]):
+            return -np.inf #return an infanitly small likelhood if any of the parameters out outside the bounds
+
+    L_mat = mgpu.get_L_mat(parr, N_nucl, Nb, n_max, num_steps, h, Ti, Si)
+    L_vec = L_mat[0]
+    model = L_vec[1:n_max + 1] / find_area_under_curve(x_data, L_vec[1:n_max + 1])
+
+    chi = chi_square(y_data_set, y_error_set, model, n_max, per_n = False)
+
+    return -0.5 * (chi)**2
