@@ -81,16 +81,8 @@ def chi_square(y_data, y_error, model, n_max, per_n = False):
     else:
         return s
 
-@np.vectorize(excluded = [1,5,6,7,8,9,10,11])
-def log_like(parr, x_data, y_data_set, y_error_set, N_nucl, Nb, n_max, num_steps, h, Ti, Si, bounds):
-    for i in range(len(parr)):
-        if not (bounds[0][i] < parr[i] < bounds[1][i]):
-            return -np.inf #return an infanitly small likelhood if any of the parameters out outside the bounds
-
-    L_mat = mgpu.get_L_mat(parr, N_nucl, Nb, n_max, num_steps, h, Ti, Si)
+def log_like(L_mat, x_data, y_data_set, y_error_set, n_max):
     L_vec = L_mat[0]
     model = L_vec[1:n_max + 1] / find_area_under_curve(x_data, L_vec[1:n_max + 1])
-
     chi = chi_square(y_data_set, y_error_set, model, n_max, per_n = False)
-
     return -0.5 * (chi)**2
