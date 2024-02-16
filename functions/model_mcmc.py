@@ -53,3 +53,11 @@ def run_mcmc(n_mcmc, nwalkers, ndim, chain_start, sigma_guess, N_nucl, L_mat0, N
                 chains[walk].append(positions[walk])
         
     return chains
+
+def flatten_chains(chains):
+    nwalkers = len(chains)
+    flat_chains = []
+    for i in range(nwalkers):
+        for step in chains[i]:
+            flat_chains.append(step)
+    return np.array(flat_chains)
